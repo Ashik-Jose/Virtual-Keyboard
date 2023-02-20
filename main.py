@@ -12,7 +12,7 @@ cap.set(4,980)
 detector = HandDetector(detectionCon=0.8)
 keyboard = Controller()
 keyboard_keys = [
-    ['Q','W','E','R','T','Y','U','I','O','P'],
+    ['Q','W','E','R','T','Y','U','I','O','P','<-'],
     ['A','S','D','F','G','H','J','K','L'],
     ['Z','X','C','V','B','N','M',',','.','/']
 ]
@@ -38,7 +38,7 @@ while True:
         hands,img = detector.findHands(img)
         cv2.rectangle(img,(90,330),(650,365),(255,255,255),cv2.FILLED)
         cv2.putText(img,strline,(93,355),cv2.FONT_HERSHEY_PLAIN,2,(0, 0, 0),2)
-       # imgNew = np.zeros_like(img,np.uint8)          
+        imgNew = np.zeros_like(img,np.uint8)          
         
         # for k in range(len(keyboard_keys)):
         #     for x,key in enumerate(keyboard_keys[k]):
@@ -50,19 +50,20 @@ while True:
             x1,y1=k.p1
             x2,y2=k.p2
             key = k.text
-            cv2.rectangle(img,(x1,y1),(x2,y2),colorR,cv2.FILLED)
-            cvzone.cornerRect(img,(x1,y1,x2-x1,y2-y1),10,rt=0)
-            cv2.putText(img,key,(x1+9,y1+29),cv2.FONT_HERSHEY_PLAIN,2,(0, 0, 0),5)
+            cv2.rectangle(imgNew,(x1,y1),(x2,y2),colorR,cv2.FILLED)
+            cvzone.cornerRect(imgNew,(x1,y1,x2-x1,y2-y1),10,rt=0)
+            cv2.putText(imgNew,key,(x1+9,y1+29),cv2.FONT_HERSHEY_PLAIN,2,(255, 255, 255),3)
                 
-        # out = img.copy()
-        # alpha = 0.3
-        # mask = imgNew.astype(bool)
-        # out[mask] = cv2.addWeighted(img,alpha,imgNew,1-alpha,0)[mask]
-        # img = out.copy()
+        out = img.copy()
+        alpha = 0.3
+        mask = imgNew.astype(bool)
+        out[mask] = cv2.addWeighted(img,alpha,imgNew,1-alpha,0)[mask]
+        img = out.copy()
 
         if hands:
             hand1 = hands[0]
             lmList1 = hand1["lmList"]
+            l1,_ = detector.findDistance((lmList1[8][0],lmList1[8][1]),(lmList1[12][0],lmList1[12][1]),img=None)
             # print(lmList1[8][2])
             # sleep(1)
             cursor = lmList1[8]
@@ -72,10 +73,29 @@ while True:
                 x2,y2=k.p2
                 key = k.text
 
-                #keyboard.press(key)
-                if x1<cursor[0]<x2 and y1<cursor[1]<y2 and cursor[2]<-150:
-                    strline+=key
-                    sleep(0.5)
+                
+                if x1<cursor[0]<x2 and y1<cursor[1]<y2:
+                    cv2.rectangle(img,(x1,y1),(x2,y2),colorR,cv2.FILLED)
+                    cvzone.cornerRect(img,(x1,y1,x2-x1,y2-y1),10,rt=0)
+                    cv2.putText(img,key,(x1+9,y1+29),cv2.FONT_HERSHEY_PLAIN,2,(0, 0, 255),3)
+                    if l1<17:
+                        if key=='<-':
+                            strline=strline[:-1]
+                            sleep(0.5)
+                        else:
+                            keyboard.press(key)
+                            strline+=key
+                            sleep(0.5)
+                    
+            if len(hands)==2:
+                hand2 = hands[0]
+                lmList2 = hand2["lmList"]
+                l2,_ = detector.findDistance((lmList2[4][0],lmList2[4][1]),(lmList2[14][0],lmList2[14][1]),img=None)
+
+                if l2<45:
+                    strline=""
+
+                
                 
 
         # print(cursor[2])
